@@ -1,0 +1,34 @@
+{
+  "name": "alexzy/hyperf-validate",
+  "description": "基于hyper框架的验证器组件",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "alexzy",
+      "email": "1003057931@qq.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Alexzy\\HyperfValidate\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=7.2",
+    "hyperf/framework": "^2.0.0",
+    "hyperf/di": "^2.0.0",
+    "hyperf/http-message": "^2.0.0",
+    "hyperf/server": "^2.0.0",
+    "hyperf/db-connection": "^2.0.0",
+    "hyperf/translation": "^2.0.0",
+    "ext-exif": "*"
+  },
+  "require-dev": {
+  },
+  "extra": {
+    "hyperf": {
+      "config": "Alexzy\\HyperfValidate\\ConfigProvider"
+    }
+  }
+}
