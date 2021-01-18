@@ -6,7 +6,9 @@ namespace Alexzy\HyperfValidate;
 
 use Alexzy\HyperfValidate\Exception\ValidateException;
 use Closure;
+use Hyperf\Contract\TranslatorInterface;
 use Hyperf\DbConnection\Db;
+use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Str;
 
 class Validate
@@ -1553,7 +1555,7 @@ class Validate
         $lang = 'validation.' . $type;
         try {
             $container = ApplicationContext::getContainer();
-            $translator = container()->get(TranslatorInterface::class);
+            $translator = $container->get(TranslatorInterface::class);
         } catch (\Exception $e) {
             //错误不做处理
         }
