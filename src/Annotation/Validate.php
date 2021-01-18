@@ -5,6 +5,12 @@ namespace Alexzy\HyperfValidate\Annotation;
 
 use Hyperf\Di\Annotation\AbstractAnnotation;
 
+/**
+ * Class Validate
+ * @package Alexzy\HyperfValidate\Annotation
+ * @Annotation
+ * @Target({"METHOD"})
+ */
 class Validate extends AbstractAnnotation
 {
     /**
