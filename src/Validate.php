@@ -866,20 +866,6 @@ class Validate
     }
 
     /**
-     * 验证表单令牌
-     * @access public
-     * @param mixed $value 字段值
-     * @param mixed $rule 验证规则
-     * @param array $data 数据
-     * @return bool
-     */
-    public function token($value, string $rule, array $data): bool
-    {
-        $rule = !empty($rule) ? $rule : '__token__';
-        return $this->request->checkToken($rule, $data);
-    }
-
-    /**
      * 验证是否为合格的域名或者IP 支持A，MX，NS，SOA，PTR，CNAME，AAAA，A6， SRV，NAPTR，TXT 或者 ANY类型
      * @access public
      * @param mixed $value 字段值

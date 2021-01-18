@@ -21,7 +21,8 @@
     "hyperf/http-message": "^2.0.0",
     "hyperf/server": "^2.0.0",
     "hyperf/db-connection": "^2.0.0",
-    "hyperf/translation": "^2.0.0"
+    "hyperf/translation": "^2.0.0",
+    "hyperf/exception-handler": "^2.0.0"
   },
   "require-dev": {
   },
