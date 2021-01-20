@@ -83,6 +83,12 @@ class Validate
     protected $message = [];
 
     /**
+     * 验证字段描述
+     * @var array
+     */
+    protected $field = [];
+
+    /**
      * @var string[] 默认规则提示
      */
     protected $typeMsg = [
@@ -207,6 +213,109 @@ class Validate
     public function batch(bool $batch = true)
     {
         $this->batch = $batch;
+        return $this;
+    }
+
+    /**
+     * 设置验证规则提示信息
+     * @param $type
+     * @param string|null $msg
+     */
+    public function setTypeMsg($type, string $msg = null): void
+    {
+        if (is_array($type)) {
+            $this->typeMsg = array_merge($this->typeMsg, $type);
+        } else {
+            $this->typeMsg[$type] = $msg;
+        }
+    }
+
+    /**
+     * 设置提示信息
+     * @param array $message
+     * @return $this
+     */
+    public function message(array $message)
+    {
+        $this->message = array_merge($this->message, $message);
+        return $this;
+    }
+
+    /**
+     * 判断验证场景是否存在
+     * @param string $name
+     * @return bool
+     */
+    public function hasScene(string $name): bool
+    {
+        return isset($this->scene[$name]) || method_exists($this, 'scene' . $name);
+    }
+
+    /**
+     * 设置验证失败后是否抛出异常
+     * @param bool $fail
+     * @return $this
+     */
+    public function failException(bool $fail = true)
+    {
+        $this->failException = $fail;
+        return $this;
+    }
+
+    /**
+     * 指定需要验证的字段
+     * @param array $fields
+     * @return $this
+     */
+    public function only(array $fields)
+    {
+        $this->only = $fields;
+        return $this;
+    }
+
+    /**
+     * 移除指定字段的验证规则
+     * @param $field
+     * @param null $rule
+     * @return $this
+     */
+    public function remove($field, $rule = null)
+    {
+        if (is_array($field)) {
+            foreach ($field as $key => $rule) {
+                if (is_int($key)) {
+                    $this->remove($rule);
+                } else {
+                    $this->remove($key, $rule);
+                }
+            }
+        } else {
+            if (is_string($rule)) {
+                $rule = explode('|', $rule);
+            }
+            $this->remove[$field] = $rule;
+        }
+        return $this;
+    }
+
+    /**
+     * 追加指定字段的验证规则
+     * @param $field
+     * @param null $rule
+     * @return $this
+     */
+    public function append($field, $rule = null)
+    {
+        if (is_array($field)) {
+            foreach ($field as $key => $rule) {
+                $this->append($key, $rule);
+            }
+        } else {
+            if (is_string($rule)) {
+                $rule = explode('|', $rule);
+            }
+            $this->append[$field] = $rule;
+        }
         return $this;
     }
 
@@ -569,6 +678,8 @@ class Validate
         return $msg;
     }
 
+
+    /******************** 验证方法 **************************************/
     /**
      * 验证字段值是否为有效格式
      * @param $value
@@ -673,5 +784,585 @@ class Validate
         }
 
         return is_scalar($value) && 1 === preg_match($rule, (string)$value);
+    }
+
+    /**
+     * 验证是否和某个字段的值一致
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @param string $field
+     * @return bool
+     */
+    public function confirm($value, $rule, array $data = [], string $field = ''): bool
+    {
+        if ('' == $rule) {
+            if (strpos($field, '_confirm')) {
+                $rule = strstr($field, '_confirm', true);
+            } else {
+                $rule = $field . '_confirm';
+            }
+        }
+        return $this->getDataValue($data, $rule) === $value;
+    }
+
+    /**
+     * 验证是否和某个字段值不同
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function different($value, $rule, array $data = []): bool
+    {
+        return $this->getDataValue($data, $rule) != $value;
+    }
+
+    /**
+     * 验证是否大于等于某个值
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function egt($value, $rule, array $data = []): bool
+    {
+        return $value >= $this->getDataValue($data, $rule);
+    }
+
+    /**
+     * 验证是否大于某个值
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function gt($value, $rule, array $data = []): bool
+    {
+        return $value > $this->getDataValue($data, $rule);
+    }
+
+    /**
+     * 验证是否小于等于某个值
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function elt($value, $rule, array $data = []): bool
+    {
+        return $value <= $this->getDataValue($data, $rule);
+    }
+
+    /**
+     * 验证是否小于某个值
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function lt($value, $rule, array $data = []): bool
+    {
+        return $value < $this->getDataValue($data, $rule);
+    }
+
+    /**
+     * 验证是否等于某个值
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function eq($value, $rule): bool
+    {
+        return $value == $rule;
+    }
+
+    /**
+     * 必须验证
+     * @param $value
+     * @param null $rule
+     * @return bool
+     */
+    public function must($value, $rule = null): bool
+    {
+        return !empty($value) || '0' == $value;
+    }
+
+    /**
+     * 验证是否为合格的域名或者IP 支持A，MX，NS，SOA，PTR，CNAME，AAAA，A6， SRV，NAPTR，TXT 或者 ANY类型
+     * @param string $value
+     * @param string $rule
+     * @return bool
+     */
+    public function activeUrl(string $value, string $rule = 'MX'): bool
+    {
+        if (!in_array($rule, ['A', 'MX', 'NS', 'SOA', 'PTR', 'CNAME', 'AAAA', 'A6', 'SRV', 'NAPTR', 'TXT', 'ANY'])) {
+            $rule = 'MX';
+        }
+
+        return checkdnsrr($value, $rule);
+    }
+
+    /**
+     * 验证是否有效IP
+     * @param $value
+     * @param string $rule
+     * @return bool
+     */
+    public function ip($value, string $rule = 'ipv4'): bool
+    {
+        if (!in_array($rule, ['ipv4', 'ipv6'])) {
+            $rule = 'ipv4';
+        }
+
+        return $this->filter($value, [FILTER_VALIDATE_IP, 'ipv6' == $rule ? FILTER_FLAG_IPV6 : FILTER_FLAG_IPV4]);
+    }
+
+    /**
+     * 验证上传文件后缀
+     * @param $file
+     * @param $rule
+     * @return bool
+     */
+    public function fileExt($file, $rule): bool
+    {
+        if (is_array($file)) {
+            foreach ($file as $item) {
+                if (!($item instanceof UploadedFile) || !$this->checkExt($item, $rule)) {
+                    return false;
+                }
+            }
+            return true;
+        } elseif ($file instanceof UploadedFile) {
+            return $this->checkExt($file, $rule);
+        }
+
+        return false;
+    }
+
+    /**
+     * 验证上传文件类型
+     * @param $file
+     * @param $rule
+     * @return bool
+     */
+    public function fileMime($file, $rule): bool
+    {
+        if (is_array($file)) {
+            foreach ($file as $item) {
+                if (!($item instanceof UploadedFile) || !$this->checkMime($item, $rule)) {
+                    return false;
+                }
+            }
+            return true;
+        } elseif ($file instanceof UploadedFile) {
+            return $this->checkMime($file, $rule);
+        }
+
+        return false;
+    }
+
+    /**
+     * 验证上传文件大小
+     * @param $file
+     * @param $rule
+     * @return bool
+     */
+    public function fileSize($file, $rule): bool
+    {
+        if (is_array($file)) {
+            foreach ($file as $item) {
+                if (!($item instanceof UploadedFile) || !$this->checkSize($item, $rule)) {
+                    return false;
+                }
+            }
+            return true;
+        } elseif ($file instanceof UploadedFile) {
+            return $this->checkSize($file, $rule);
+        }
+
+        return false;
+    }
+
+    /**
+     * 验证图片的宽高及类型
+     * @param $file
+     * @param $rule
+     * @return bool
+     */
+    public function image($file, $rule): bool
+    {
+        if (!($file instanceof UploadedFile)) {
+            return false;
+        }
+        if ($rule) {
+            $rule = explode(',', $rule);
+            [$width, $height, $type] = getimagesize($file->getRealPath());
+            if (isset($rule[2])) {
+                $imageType = strtolower($rule[2]);
+
+                if ('jpg' == $imageType) {
+                    $imageType = 'jpeg';
+                }
+                if (image_type_to_extension($type, false) != $imageType) {
+                    return false;
+                }
+            }
+            [$w, $h] = $rule;
+            return $w == $width && $h == $height;
+        }
+        return in_array($this->getImageType($file->getRealPath()), [1, 2, 3, 6]);
+    }
+
+    /**
+     * 验证时间和日期是否符合指定格式
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function dateFormat($value, $rule): bool
+    {
+        $info = date_parse_from_format($rule, $value);
+        return 0 == $info['warning_count'] && 0 == $info['error_count'];
+    }
+
+    /**
+     * 验证是否唯一
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @param string $field
+     * @return bool
+     */
+    public function unique($value, $rule, array $data = [], string $field = ''): bool
+    {
+    }
+
+    /**
+     * 验证某个字段等于某个值的时候必须
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function requireIf($value, $rule, array $data = []): bool
+    {
+        [$field, $val] = explode(',', $rule);
+
+        if ($this->getDataValue($data, $field) == $val) {
+            return !empty($value) || '0' == $value;
+        }
+
+        return true;
+    }
+
+    /**
+     * 通过回调方法验证某个字段是否必须
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function requireCallback($value, $rule, array $data = []): bool
+    {
+        $result = call_user_func_array([$this, $rule], [$value, $data]);
+
+        if ($result) {
+            return !empty($value) || '0' == $value;
+        }
+
+        return true;
+    }
+
+    /**
+     * 验证某个字段有值的情况下必须
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function requireWith($value, $rule, array $data = []): bool
+    {
+        $val = $this->getDataValue($data, $rule);
+
+        if (!empty($val)) {
+            return !empty($value) || '0' == $value;
+        }
+
+        return true;
+    }
+
+    /**
+     * 验证某个字段没有值的情况下必须
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function requireWithout($value, $rule, array $data = []): bool
+    {
+        $val = $this->getDataValue($data, $rule);
+
+        if (empty($val)) {
+            return !empty($value) || '0' == $value;
+        }
+
+        return true;
+    }
+
+    /**
+     * 验证是否在范围内
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function in($value, $rule): bool
+    {
+        return in_array($value, is_array($rule) ? $rule : explode(',', $rule));
+    }
+
+    /**
+     * 验证是否不在某个范围
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function notIn($value, $rule): bool
+    {
+        return !in_array($value, is_array($rule) ? $rule : explode(',', $rule));
+    }
+
+    /**
+     * 验证数据在指定范围
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function between($value, $rule): bool
+    {
+        if (is_string($rule)) {
+            $rule = explode(',', $rule);
+        }
+        [$min, $max] = $rule;
+
+        return $value >= $min && $value <= $max;
+    }
+
+    /**
+     * 验证数据不在指定范围
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function notBetween($value, $rule): bool
+    {
+        if (is_string($rule)) {
+            $rule = explode(',', $rule);
+        }
+        [$min, $max] = $rule;
+
+        return $value < $min || $value > $max;
+    }
+
+    /**
+     * 验证数据长度
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function length($value, $rule): bool
+    {
+        if (is_array($value)) {
+            $length = count($value);
+        } elseif ($value instanceof UploadedFile) {
+            $length = $value->getSize();
+        } else {
+            $length = mb_strlen((string)$value);
+        }
+
+        if (is_string($rule) && strpos($rule, ',')) {
+            // 长度区间
+            [$min, $max] = explode(',', $rule);
+            return $length >= $min && $length <= $max;
+        }
+
+        // 指定长度
+        return $length == $rule;
+    }
+
+    /**
+     * 验证数据最大长度
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function max($value, $rule): bool
+    {
+        if (is_array($value)) {
+            $length = count($value);
+        } elseif ($value instanceof UploadedFile) {
+            $length = $value->getSize();
+        } else {
+            $length = mb_strlen((string)$value);
+        }
+
+        return $length <= $rule;
+    }
+
+    /**
+     * 验证数据最小长度
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function min($value, $rule): bool
+    {
+        if (is_array($value)) {
+            $length = count($value);
+        } elseif ($value instanceof UploadedFile) {
+            $length = $value->getSize();
+        } else {
+            $length = mb_strlen((string)$value);
+        }
+
+        return $length >= $rule;
+    }
+
+    /**
+     * 验证日期之后
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function after($value, $rule, array $data = []): bool
+    {
+        return strtotime($value) >= strtotime($rule);
+    }
+
+    /**
+     * 验证日期之前
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function before($value, $rule, array $data = []): bool
+    {
+        return strtotime($value) <= strtotime($rule);
+    }
+
+    /**
+     * 指定字段之后
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function afterWith($value, $rule, array $data = []): bool
+    {
+        $rule = $this->getDataValue($data, $rule);
+        return !is_null($rule) && strtotime($value) >= strtotime($rule);
+    }
+
+    /**
+     * 指定字段之前
+     * @param $value
+     * @param $rule
+     * @param array $data
+     * @return bool
+     */
+    public function beforeWith($value, $rule, array $data = []): bool
+    {
+        $rule = $this->getDataValue($data, $rule);
+        return !is_null($rule) && strtotime($value) <= strtotime($rule);
+    }
+
+    /**
+     * 验证是否在某个有效日期之内
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function expire($value, $rule): bool
+    {
+        if (is_string($rule)) {
+            $rule = explode(',', $rule);
+        }
+
+        [$start, $end] = $rule;
+
+        if (!is_numeric($start)) {
+            $start = strtotime($start);
+        }
+
+        if (!is_numeric($end)) {
+            $end = strtotime($end);
+        }
+
+        return time() >= $start && time() <= $end;
+    }
+
+    /**
+     * 验证IP许可
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function allowIp($value, $rule): bool
+    {
+        return in_array($value, is_array($rule) ? $rule : explode(',', $rule));
+    }
+
+    /**
+     * 验证IP禁用
+     * @param $value
+     * @param $rule
+     * @return bool
+     */
+    public function denyIp($value, $rule): bool
+    {
+        return !in_array($value, is_array($rule) ? $rule : explode(',', $rule));
+    }
+
+    /**
+     * 检测上传文件后缀
+     * @param UploadedFile $file
+     * @param $ext
+     * @return bool
+     */
+    protected function checkExt(UploadedFile $file, $ext): bool
+    {
+        if (is_string($ext)) {
+            $ext = explode(',', $ext);
+        }
+
+        return in_array(strtolower($file->getExtension()), $ext);
+    }
+
+    /**
+     * 检测上传文件大小
+     * @param UploadedFile $file
+     * @param $size
+     * @return bool
+     */
+    protected function checkSize(UploadedFile $file, $size): bool
+    {
+        return $file->getSize() <= (int)$size;
+    }
+
+    /**
+     * 检测上传文件类型
+     * @param UploadedFile $file
+     * @param $mime
+     * @return bool
+     */
+    protected function checkMime(UploadedFile $file, $mime): bool
+    {
+        if (is_string($mime)) {
+            $mime = explode(',', $mime);
+        }
+
+        return in_array(strtolower($file->getMimeType()), $mime);
     }
 }
