@@ -367,7 +367,7 @@ class Validate
                 // 验证失败
                 if (!empty($msg[$i])) {
                     $message = $msg[$i];
-                    trans(substr($message, 2, -1));
+                    $message = $this->translator(substr($message, 2, -1));
                 } else {
                     $message = $this->getRuleMsg($field, $title, $info, $rule);
                 }
@@ -469,17 +469,23 @@ class Validate
         } elseif (isset($this->message[$attribute])) {
             $msg = $this->message[$attribute];
         } elseif (isset($this->typeMsg[$type])) {
-            $msg = trans($type);
+            $msg = $this->translator($type);
         } elseif (0 === strpos($type, 'require')) {
-            $msg = trans('require');
+            $msg = $this->translator('require');
         } else {
-            $msg = $title . trans('not_rules');
+            $msg = $title . $this->translator('not_rules');
         }
 
         if (is_array($msg)) {
             return $this->errorMsgIsArray($msg, $rule, $title);
         }
         return $this->parseErrorMsg($msg, $rule, $title);
+    }
+
+    private function translator($key)
+    {
+        $lang = 'validation.' . $key;
+        return trans($lang);
     }
 
     /**
@@ -528,7 +534,7 @@ class Validate
     protected function parseErrorMsg(string $msg, $rule, string $title)
     {
         if (0 === strpos($msg, '{%')) {
-            $msg = trans(substr($msg, 2, -1));
+            $msg = $this->translator(substr($msg, 2, -1));
         }
 
         if (is_array($msg)) {
