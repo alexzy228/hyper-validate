@@ -482,10 +482,16 @@ class Validate
         return $this->parseErrorMsg($msg, $rule, $title);
     }
 
+    /**
+     * 翻译 多语言支持
+     * @param $key
+     * @return string
+     */
     private function translator($key)
     {
         $lang = 'validation.' . $key;
-        return trans($lang);
+        $lang = trans($lang);
+        return $lang == 'validation.' . $key ? $this->typeMsg[$key] : $lang;
     }
 
     /**
