@@ -12,7 +12,10 @@
   "autoload": {
     "psr-4": {
       "Alexzy\\HyperfValidate\\": "src/"
-    }
+    },
+    "files": [
+      "src/helper.php"
+    ]
   },
   "require": {
     "php": ">=7.2",

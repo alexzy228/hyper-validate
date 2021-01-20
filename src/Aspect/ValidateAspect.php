@@ -49,7 +49,7 @@ class ValidateAspect extends AbstractAspect
                 $data = $request->all();
                 if ($validate->batch($validateMethod->batch)->check($data) === false) {
                     if ($validateMethod->throws) {
-                        throw new ValidateException(406, $validate->getError());
+                        throw new ValidateException($validate->getError());
                     } else {
                         //错误信息写入请求
                         Context::override(ServerRequestInterface::class, function (ServerRequestInterface $request) use ($validate) {

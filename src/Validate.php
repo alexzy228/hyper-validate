@@ -176,6 +176,25 @@ class Validate
     }
 
     /**
+     * 获取错误信息
+     * @return array|string
+     */
+    public function getError()
+    {
+        return $this->error;
+    }
+
+    /**
+     * 获取验证场景的规则
+     * @param string $name
+     * @return array|mixed
+     */
+    public function getSceneRule(string $name)
+    {
+        return $this->scene[$name] ?? $this->rule;
+    }
+
+    /**
      * 检查方法
      * @param array $data
      * @param array $rules
