@@ -4,6 +4,7 @@ namespace Alexzy\HyperfValidate;
 
 use Alexzy\HyperfValidate\Exception\ValidateException;
 use Closure;
+use Hyperf\DbConnection\Db;
 use Hyperf\HttpMessage\Upload\UploadedFile;
 use Hyperf\Utils\Str;
 
@@ -177,6 +178,11 @@ class Validate
         'idCard' => '/(^[1-9]\d{5}(18|19|([23]\d))\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$)|(^[1-9]\d{5}\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{3}$)/',
         'zip' => '/\d{6}/',
     ];
+
+    /**
+     * @var Db
+     */
+    protected $db;
 
     /**
      * 设置验证场景
@@ -1036,6 +1042,40 @@ class Validate
      */
     public function unique($value, $rule, array $data = [], string $field = ''): bool
     {
+        if (is_string($rule)) {
+            $rule = explode(',', $rule);
+        }
+        if (false !== strpos($rule[0], '\\')) {
+            // 指定模型类
+            $db = new $rule[0];
+        } else {
+            $db = $this->db->table($rule[0]);
+        }
+        $key = $rule[1] ?? $field;
+        $map = [];
+        if (strpos($key, '^')) {
+            // 支持多个字段验证
+            $fields = explode('^', $key);
+            foreach ($fields as $key) {
+                if (isset($data[$key])) {
+                    $map[] = [$key, '=', $data[$key]];
+                }
+            }
+        } elseif (isset($data[$field])) {
+            $map[] = [$key, '=', $data[$field]];
+        }
+        $pk = !empty($rule[3]) ? $rule[3] : 'id';
+        if (is_string($pk)) {
+            if (isset($rule[2])) {
+                $map[] = [$pk, '<>', $rule[2]];
+            } elseif (isset($data[$pk])) {
+                $map[] = [$pk, '<>', $data[$pk]];
+            }
+        }
+        if ($db->where($map)->select($pk)->first()) {
+            return false;
+        }
+        return true;
     }
 
     /**
