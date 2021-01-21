@@ -598,9 +598,9 @@ class Validate
      */
     private function translator($key)
     {
-        $lang = 'validation.' . $key;
+        $lang = 'validate.' . $key;
         $lang = trans($lang);
-        return $lang == 'validation.' . $key ? $this->typeMsg[$key] : $lang;
+        return $lang == 'validate.' . $key ? $this->typeMsg[$key] : $lang;
     }
 
     /**
