@@ -5,6 +5,7 @@ namespace Alexzy\HyperfValidate;
 use Alexzy\HyperfValidate\Exception\ValidateException;
 use Closure;
 use Hyperf\DbConnection\Db;
+use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpMessage\Upload\UploadedFile;
 use Hyperf\Utils\Str;
 
@@ -180,6 +181,7 @@ class Validate
     ];
 
     /**
+     * @Inject()
      * @var Db
      */
     protected $db;
