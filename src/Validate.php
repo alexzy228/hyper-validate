@@ -472,7 +472,7 @@ class Validate
                 if (isset($this->type[$type])) {
                     // 调用自定义验证类型方法
                     $result = call_user_func_array($this->type[$type], [$value, $rule, $data, $field, $title]);
-                } elseif ('must' == $info || 0 === strpos($info, 'require') || (!is_null($value) && '' !== $value)) {
+                } elseif ('must' == $info || 0 === strpos($info, 'require') || !is_null($value)) {
                     // 调用方法验证
                     $result = call_user_func_array([$this, $type], [$value, $rule, $data, $field, $title]);
                 } else {
