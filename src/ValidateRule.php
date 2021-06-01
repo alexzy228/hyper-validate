@@ -87,7 +87,7 @@ class ValidateRule
      * @param string $msg
      * @return $this
      */
-    protected function addItem(string $name, $rule = null, string $msg = '')
+    protected function addItem(string $name, $rule = null, string $msg = ''): ValidateRule
     {
         if ($rule || 0 === $rule) {
             $this->rule[$name] = $rule;
@@ -131,7 +131,7 @@ class ValidateRule
      * @param string $title
      * @return ValidateRule
      */
-    public function title(string $title)
+    public function title(string $title): ValidateRule
     {
         $this->title = $title;
 

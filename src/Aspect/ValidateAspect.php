@@ -27,10 +27,10 @@ class ValidateAspect extends AbstractAspect
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
         $request = ApplicationContext::getContainer()->get(ServerRequestInterface::class);
-        $validate = '';
 
         foreach ($proceedingJoinPoint->getAnnotationMetadata()->method as $validateMethod) {
             if ($validateMethod instanceof Validate) {
+                // 验证器类不能为空
                 if (!$validateMethod->validate) {
                     throw new ValidateException("validate 不能为空");
                 }
@@ -45,7 +45,7 @@ class ValidateAspect extends AbstractAspect
                 if ($validateMethod->scene) {
                     $validate = $validate->scene($validateMethod->scene);
                 }
-
+                // 表单提交数据
                 $data = $request->all();
                 if ($validate->batch($validateMethod->batch)->check($data) === false) {
                     if ($validateMethod->throws) {
@@ -56,22 +56,6 @@ class ValidateAspect extends AbstractAspect
                             return $request->withAttribute('validate', $validate->getError());
                         });
                     }
-                }
-
-                if (empty($validate->getError()) && $validateMethod->filter) {
-                    $rules = $validate->getSceneRule($validateMethod->scene);
-                    $new_data = [];
-                    foreach ($rules as $key) {
-                        if (strstr($key, "|")) {
-                            $key = explode('|', $key)[0];
-                        }
-                        if (isset($data[$key])) {
-                            $new_data[$key] = $data[$key];
-                        }
-                    }
-                    Context::override(ServerRequestInterface::class, function (ServerRequestInterface $request) use ($new_data) {
-                        return $request->withParsedBody($new_data);
-                    });
                 }
             }
         }

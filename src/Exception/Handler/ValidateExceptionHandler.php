@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Alexzy\HyperfValidate\Exception\Handler;
 
 use Alexzy\HyperfValidate\Exception\ValidateException;
-use Alexzy\HyperfValidate\Validate;
 use Hyperf\ExceptionHandler\ExceptionHandler;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Psr\Http\Message\ResponseInterface;
@@ -27,6 +26,6 @@ class ValidateExceptionHandler extends ExceptionHandler
 
     public function isValid(Throwable $throwable): bool
     {
-        return $throwable instanceof Validate;
+        return $throwable instanceof ValidateException;
     }
 }
